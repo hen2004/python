@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, jsonify
 from discord_webhook import DiscordWebhook
 import sqlite3
 from datetime import datetime, timedelta
+
+num=1
 app = Flask(__name__)
 DISCORD_WEBHOOK_URL = 'https://discordapp.com/api/webhooks/1352341994864775228/MoipUlv_ykbas0IaOm-VplphwVI3z2eWyKQ6dc6pCIbdPmcvNHLWNixnp0HJOo3sThVf'
 # Database helper function
