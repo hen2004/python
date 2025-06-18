@@ -1,0 +1,12 @@
+replicaCount: 2
+
+image:
+  repository: 768997460089.dkr.ecr.us-east-1.amazonaws.com/lawyal-app
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: LoadBalancer
+  port: 80
+  targetPort: 5000
+

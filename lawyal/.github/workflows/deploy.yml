@@ -1,0 +1,50 @@
+name: CI/CD Deploy to EKS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: us-east-1
+      ECR_REPOSITORY: lawyal-app
+      CLUSTER_NAME: lawyal-eks-cluster
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region $AWS_REGION \
+            | docker login --username AWS --password-stdin 768997460089.dkr.ecr.$AWS_REGION.amazonaws.com
+
+      - name: Build, tag, and push Docker image
+        run: |
+          docker build -t $ECR_REPOSITORY ./app
+          docker tag $ECR_REPOSITORY:latest 768997460089.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest
+          docker push 768997460089.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install lawyal-app ./helm/lawyal-app \
+            --namespace lawyal \
+            --create-namespace \
+            --set image.repository=768997460089.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY \
+            --set image.tag=latest
+
